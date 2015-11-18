@@ -80,7 +80,7 @@ public class MainMenuScreen extends GameScreen {
                     PlayMenuItem.touched(events.get(i));
                 }
             } else if(events.get(i).type == TouchEvent.TouchEvents.TOUCH_UP){
-                if(PlayMenuItem.checkCollision(events.get(i).x, events.get(i).y) && !PlayMenuItem.isTouched()){
+                if(PlayMenuItem.checkCollision(events.get(i).x, events.get(i).y)){
                     mGameState = GameState.NEXT;
                 }
                 PlayMenuItem.touched(events.get(i));

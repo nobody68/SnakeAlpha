@@ -100,7 +100,7 @@ public class BoardScreen extends GameScreen {
             }
         }
         int length = snake.size();
-
+        //Sets the x and y of the pieces of the snake starting at tail and ending at head.
         for (int index = length - 1; index >= 0; index--) {
             ImageSection s = snake.get(index);
             if (index == 0) {
