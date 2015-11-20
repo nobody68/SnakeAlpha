@@ -1,5 +1,7 @@
 package com.moonstub.training.app.snakealpha.Screens;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Rect;
 
@@ -24,16 +26,26 @@ public class BoardScreen extends GameScreen {
     boolean firstStart = true;
     boolean forward = true;
     String gameMessage = "";
+    String gameMessage2 = "";
+    String gameMessage3 = "";
+    String gameMessage4 = "";
     float elapsedTime = 0.0f;
-
+    Boolean isFoodRotten = false;
 
     public BoardScreen(GameActivity game, ArrayList<Section> levelSection) {
         super(game);
         level = levelSection;
     }
+    public void rotten() {
+        level.add(new Section(0,0,0));
+        level.get(level.size() - 1).setPoint(apple.x, apple.y);
+        isFoodRotten=false;
+        dropApple();
+    }
 
     @Override
     public void init() {
+        GameSettings.SCORE=0;
         apple = new ImageSection(GameAssets.SnakeFoodApple);
         firstStart = true;
         mDirection = SnakeDirection.EAST;
@@ -54,7 +66,13 @@ public class BoardScreen extends GameScreen {
     public void update(float delta) {
         elapsedTime += delta;
         if (elapsedTime > GameSettings.SPEED) {
+            GameSettings.RottenTime++;
             elapsedTime = 0;
+            //TODO Change the apple image at GameSettings.RottenTime==30 to a red to show it is going bad.
+            if (GameSettings.RottenTime==35) {
+                GameSettings.RottenTime = 0;
+                isFoodRotten = true;
+            }
 
             ArrayList<TouchEvent.TouchEvents> events = (ArrayList<TouchEvent.TouchEvents>) getGameActivity().getGameInput().getTouchEvents();
             switch (mGameState) {
@@ -80,7 +98,6 @@ public class BoardScreen extends GameScreen {
     }
 
     private void updateGameOver(ArrayList<TouchEvent.TouchEvents> events) {
-        gameMessage = "Game Over Man Tap to Try Again";
         if(events.size() > 0){
             //mGameState = GameState.INIT;
             init();
@@ -90,6 +107,9 @@ public class BoardScreen extends GameScreen {
     private void updateRunning(float delta, ArrayList<TouchEvent.TouchEvents> events) {
         int eventSize = events.size();
 
+        if(isFoodRotten) {
+            rotten();
+        }
         if (eventSize > 0) {
             for (int i = 0; i < eventSize; i++) {
                 if (events.get(i).type == TouchEvent.TouchEvents.TOUCH_DOWN){
@@ -107,10 +127,25 @@ public class BoardScreen extends GameScreen {
                 moveSnake(mDirection);
                 //Check wall Collision
                 if(s.checkCollisionList((ArrayList<Section>) level)){
+                    //TODO Shared preferences to save high score.
+                    SharedPreferences pref = getGameActivity().getSharedPreferences("MyPref", GameActivity.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = pref.edit();
+                    editor.commit();
+                    if(pref.getInt("highScore",0)<=GameSettings.SCORE){
+                        editor.putInt("highScore", GameSettings.SCORE);
+                        editor.commit();
+                    }
+
+                    gameMessage = "Game Over.";
+                    gameMessage2 = "Score:"+GameSettings.SCORE;
+                    gameMessage3 = "High score:"+pref.getInt("highScore",0);
+                    gameMessage4 = "Tap to Try Again";
                     mGameState = GameState.GAME_OVER;
                 }
                 //Check Apple Collision
                 if(s.checkCollisionSelf(apple)){
+                    GameSettings.SCORE=GameSettings.SCORE+10;
+                    GameSettings.RottenTime = 0;
                     dropApple();
                     addSnakeSection();
                 }
@@ -125,6 +160,8 @@ public class BoardScreen extends GameScreen {
     }
 
     private void dropApple() {
+        //TODO drops apple
+        GameSettings.RottenTime = 0;
         Random rand = new Random();
         int x = rand.nextInt(24) * GameSettings.GRID_SIZE;
         int y = rand.nextInt(16) * GameSettings.GRID_SIZE;
@@ -296,6 +333,9 @@ public class BoardScreen extends GameScreen {
         getPaint().setColor(Color.WHITE);
         getPaint().setTextSize(45.0f);
         g.drawString(gameMessage, 100, 100, getPaint());
+        g.drawString(gameMessage2, 100, 200, getPaint());
+        g.drawString(gameMessage3, 100, 300, getPaint());
+        g.drawString(gameMessage4, 100, 400, getPaint());
     }
 
     private void drawPaused(GameGraphics g) {

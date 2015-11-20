@@ -38,6 +38,7 @@ public class GameIO {
     }
 
     public OutputStream writeFile(String file) throws IOException{
+        //TODO this is were you write a file for like a high score
         return new FileOutputStream(mPath + file);
     }
 

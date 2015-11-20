@@ -53,4 +53,8 @@ public class Section {
     }
 
 
+    public void setPoint(int x, int y) {
+        this.x=x;
+        this.y=y;
+    }
 }
