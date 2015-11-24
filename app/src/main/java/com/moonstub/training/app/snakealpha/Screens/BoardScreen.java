@@ -25,12 +25,16 @@ public class BoardScreen extends GameScreen {
     SnakeDirection mDirection = SnakeDirection.EAST;
     boolean firstStart = true;
     boolean forward = true;
+    String scoreMessage = "";
     String gameMessage = "";
     String gameMessage2 = "";
     String gameMessage3 = "";
     String gameMessage4 = "";
     float elapsedTime = 0.0f;
     Boolean isFoodRotten = false;
+    String gameMessageScore = "";
+    private List<Section> levelSection;
+
 
     public BoardScreen(GameActivity game, ArrayList<Section> levelSection) {
         super(game);
@@ -45,7 +49,13 @@ public class BoardScreen extends GameScreen {
 
     @Override
     public void init() {
-        GameSettings.SCORE=0;
+        GameSettings.SCORE=100*GameSettings.lvl;
+
+        /*
+        LoadLevel loadLevel = new LoadLevel(getGameActivity().getGameIO());
+        loadLevel.loadFile("level_1_01.txt");
+        levelSection = loadLevel.parseString(loadLevel.stringLevel);*/
+
         apple = new ImageSection(GameAssets.SnakeFoodApple);
         firstStart = true;
         mDirection = SnakeDirection.EAST;
@@ -100,11 +110,17 @@ public class BoardScreen extends GameScreen {
     private void updateGameOver(ArrayList<TouchEvent.TouchEvents> events) {
         if(events.size() > 0){
             //mGameState = GameState.INIT;
-            init();
+            getGameActivity().setCurrentScreen(new MainMenuScreen(getGameActivity()));
+            //init();
         }
     }
 
     private void updateRunning(float delta, ArrayList<TouchEvent.TouchEvents> events) {
+        SharedPreferences pref = getGameActivity().getSharedPreferences("MyPref", GameActivity.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.commit();
+        scoreMessage="SCORE: "+GameSettings.SCORE;
+        gameMessage = "High score:"+pref.getInt("highScore",0);
         int eventSize = events.size();
 
         if(isFoodRotten) {
@@ -128,9 +144,7 @@ public class BoardScreen extends GameScreen {
                 //Check wall Collision
                 if(s.checkCollisionList((ArrayList<Section>) level)){
                     //TODO Shared preferences to save high score.
-                    SharedPreferences pref = getGameActivity().getSharedPreferences("MyPref", GameActivity.MODE_PRIVATE);
-                    SharedPreferences.Editor editor = pref.edit();
-                    editor.commit();
+
                     if(pref.getInt("highScore",0)<=GameSettings.SCORE){
                         editor.putInt("highScore", GameSettings.SCORE);
                         editor.commit();
@@ -140,12 +154,19 @@ public class BoardScreen extends GameScreen {
                     gameMessage2 = "Score:"+GameSettings.SCORE;
                     gameMessage3 = "High score:"+pref.getInt("highScore",0);
                     gameMessage4 = "Tap to Try Again";
+                    GameSettings.RottenTime = 0;
+                    GameSettings.lvl = 0;
                     mGameState = GameState.GAME_OVER;
                 }
                 //Check Apple Collision
                 if(s.checkCollisionSelf(apple)){
+                    //TODO make it go to next level after 10 apples
                     GameSettings.SCORE=GameSettings.SCORE+10;
                     GameSettings.RottenTime = 0;
+                    if(GameSettings.SCORE%100==0 && GameSettings.SCORE<=500) {
+                        GameSettings.lvl++;
+                        nextLvl();
+                    }
                     dropApple();
                     addSnakeSection();
                 }
@@ -157,6 +178,27 @@ public class BoardScreen extends GameScreen {
 
 
 
+    }
+
+    private void nextLvl(){
+        LoadLevel loadLevel = new LoadLevel(getGameActivity().getGameIO());
+        loadLevel.loadFile(getNextLvl(GameSettings.lvl));
+        levelSection = loadLevel.parseString(loadLevel.stringLevel);
+        getGameActivity().setCurrentScreen(new BoardScreen(getGameActivity(), (ArrayList<Section>) levelSection));
+    }
+
+    private String getNextLvl(int num){
+        String ans="level_5_01.txt";
+        if(num==1){
+            ans="level_2_01.txt";
+        }
+        else if(num==2){
+            ans="level_3_01.txt";
+        }
+        else if(num==3){
+            ans="level_4_01.txt";
+        }
+        return(ans);
     }
 
     private void dropApple() {
@@ -319,6 +361,10 @@ public class BoardScreen extends GameScreen {
     }
 
     private void drawRunning(GameGraphics g) {
+        getPaint().setColor(Color.WHITE);
+        getPaint().setTextSize(45.0f);
+        g.drawString(scoreMessage, 100, 40, getPaint());
+        g.drawString(gameMessage, 800, 40, getPaint());
         if (snake.size() > 0) {
             for (int index = 0; index < snake.size(); index++) {
                 snake.get(index).draw(g);
