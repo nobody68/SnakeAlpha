@@ -22,7 +22,6 @@ public class MainMenuScreen extends GameScreen {
 
     @Override
     public void init() {
-        //TODO this loads levels I want to try and use it to make the apples turn to walls
         LoadLevel loadLevel = new LoadLevel(getGameActivity().getGameIO());
         loadLevel.loadFile("level_1_01.txt");
         levelSection = loadLevel.parseString(loadLevel.stringLevel);

@@ -14,4 +14,5 @@ public class GameSettings {
     public static final float SPEED = 12;
     public static int RottenTime = 0;
     public static int SCORE = 0;
+    public static int lvl=0;
 }
